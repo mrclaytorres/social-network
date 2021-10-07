@@ -1,3 +1,5 @@
+const { default: Web3 } = require('web3');
+
 const SocialNetwork = artifacts.require("./SocialNetwork");
 
 require('chai')
@@ -42,6 +44,9 @@ contract('SocialNetwork', ([deployer, author, tipper]) => {
             assert.equal(event.content, 'This is the first post.', 'content is correct')
             assert.equal(event.tipAmount, '0', 'tip amount is correct')
             assert.equal(event.author, author, 'author is correct')
+
+            // FAILURE: post must have content
+            await socialNetwork.createPost('', { from: author }).should.be.rejected;
         })
         
         it('lists posts', async () => {
@@ -52,8 +57,36 @@ contract('SocialNetwork', ([deployer, author, tipper]) => {
             assert.equal(post.author, author, 'author is correct')
         })
         
-        // it('allow users to tip posts', async () => {
-        //     //Todo here
-        // })
+        it('allow users to tip posts', async () => {
+            // Track the author balance before tipped
+            let oldAuthorBalance
+            oldAuthorBalance = await web3.eth.getBalance(author)
+            oldAuthorBalance = new web3.utils.BN(oldAuthorBalance)
+
+            result = await socialNetwork.tipPost(postCount, { from: tipper, value: web3.utils.toWei('1', 'Ether') })
+
+            //Success
+            const event = result.logs[0].args
+            assert.equal(event.id.toNumber(), postCount.toNumber(), 'id is correct')
+            assert.equal(event.content, 'This is the first post.', 'content is correct')
+            assert.equal(event.tipAmount, '1000000000000000000', 'tip amount is correct')
+            assert.equal(event.author, author, 'author is correct')
+
+            let newAuthorBalance
+            newAuthorBalance = await web3.eth.getBalance(author)
+            newAuthorBalance = new web3.utils.BN(newAuthorBalance)
+
+            let tipAmount
+            tipAmount = web3.utils.toWei('1', 'Ether')
+            tipAmount = new web3.utils.BN(tipAmount)
+            
+            const expectedBalance = oldAuthorBalance.add(tipAmount)
+
+            // Compare if the expected balance equals the author's new balance
+            assert.equal(newAuthorBalance.toString(), expectedBalance.toString())
+
+            // Ensure that the post exist before you can tip
+            await socialNetwork.tipPost(99, { from: tipper, value: web3.utils.toWei('1', 'Ether')}).should.be.rejected
+        })
     })
 });
