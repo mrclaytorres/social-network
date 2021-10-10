@@ -28,7 +28,7 @@ contract('SocialNetwork', ([deployer, author, tipper]) => {
         })
     })
 
-    describe('post', async () => {
+    describe('posts', async () => {
         let result, postCount
 
         before(async () => {
