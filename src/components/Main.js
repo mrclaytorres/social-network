@@ -20,9 +20,7 @@ class Main extends Component {
                                     <input 
                                         id="postContent"
                                         type="text"
-                                        ref={(input) => {
-                                            this.postContent = input
-                                        }}
+                                        ref={(input) => {this.postContent = input}}
                                         className="form-control"
                                         placeholder="What's on your mind?"
                                         required
@@ -51,10 +49,15 @@ class Main extends Component {
                                                 <small className="float-left mt-1 text-muted">
                                                     TIPS: {window.web3.utils.fromWei(post.tipAmount.toString(), 'Ether')} ETH
                                                 </small>
-                                                <button className="btn btn-link btn-sm float-right pt-0">
-                                                    <span>
-                                                        TIP 0.1 ETH
-                                                    </span>
+                                                <button 
+                                                    className="btn btn-link btn-sm float-right pt-0"
+                                                    name={post.id}
+                                                    onClick={ (event) => {
+                                                        let tipAmount = window.web3.utils.toWei('0.1', 'Ether')
+                                                        this.props.tipPost(event.target.name, tipAmount)
+                                                    }}
+                                                >
+                                                    TIP 0.1 ETH
                                                 </button>
                                             </li>
                                         </ul>

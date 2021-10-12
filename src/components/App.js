@@ -46,23 +46,36 @@ class App extends Component {
 			this.setState({ postCount })
 			
 			// Load Posts
-			for (var i = 0; i <= postCount; i++){
+			for (var i = 1; i <= postCount; i++){
 				const post = await socialNetwork.methods.posts(i).call()
 				this.setState({
 					posts: [...this.state.posts, post]
 				})
 			}
+			// Sort post. Show highest tipped post first.
+			this.setState({
+				posts: this.state.posts.sort((a,b) => b.tipAmount - a.tipAmount)
+			})
 			this.setState({ loading: false })
 		} else {
 			window.alert('SocialNetwork contract not deployed to detected network.')
 		}
-		// Address
-		// ABI
 	}
 
 	createPost(content) {
 		this.setState({ loading: true })
 		this.state.socialNetwork.methods.createPost(content).send({ from: this.state.account })
+		.on('confirmation', (confirmationNumber, receipt) => {
+			console.log(confirmationNumber)
+			console.log(receipt)
+			this.setState({ loading: false })
+			window.location.reload();
+		})
+	}
+
+	tipPost(id, tipAmount) {
+		this.setState({ loading: true })
+		this.state.socialNetwork.methods.tipPost(id).send({ from: this.state.account, value: tipAmount })
 		.on('confirmation', (confirmationNumber, receipt) => {
 			console.log(confirmationNumber)
 			console.log(receipt)
@@ -82,6 +95,7 @@ class App extends Component {
 		}
 
 		this.createPost = this.createPost.bind(this)
+		this.tipPost = this.tipPost.bind(this)
 	}
 
 	render() {
@@ -93,6 +107,7 @@ class App extends Component {
 					: <Main 
 						posts={this.state.posts}
 						createPost={this.createPost}
+						tipPost={this.tipPost}
 						/>
 				}
 			</div>
