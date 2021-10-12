@@ -5,6 +5,7 @@ import Identicon from 'identicon.js';
 import './App.css';
 import SocialNetwork from '../abis/SocialNetwork.json'
 import Navbar from './Navbar';
+import Main from './Main';
 
 class App extends Component {
 
@@ -51,12 +52,23 @@ class App extends Component {
 					posts: [...this.state.posts, post]
 				})
 			}
-			console.log({ posts: this.state.posts })
+			this.setState({ loading: false })
 		} else {
 			window.alert('SocialNetwork contract not deployed to detected network.')
 		}
 		// Address
 		// ABI
+	}
+
+	createPost(content) {
+		this.setState({ loading: true })
+		this.state.socialNetwork.methods.createPost(content).send({ from: this.state.account })
+		.on('confirmation', (confirmationNumber, receipt) => {
+			console.log(confirmationNumber)
+			console.log(receipt)
+			this.setState({ loading: false })
+			window.location.reload();
+		})
 	}
 
 	constructor(props){
@@ -65,50 +77,24 @@ class App extends Component {
 			account: '',
 			socialNetwork: null,
 			postCount: 0,
-			posts: []
+			posts: [],
+			loading: true
 		}
+
+		this.createPost = this.createPost.bind(this)
 	}
 
 	render() {
 		return (
 			<div>
 				<Navbar account={this.state.account} />
-				<div className="container-fluid mt-5">
-					<div className="row">
-						<main role="main" className="col-lg-12 ml-auto mr-auto" style={{ maxWidth: '500px' }}>
-							{this.state.posts.map((post, key) => {
-								return(
-									<div className="card mb-4" key={key}>
-										<div className="card-header">
-											<img
-											className='m3-2'
-											width='30'
-											height='30'
-											src={`data:image/png;base64, ${new Identicon(this.state.account, 30).toString()}`}
-											/>
-											<small className="text-muted">{post.author}</small>
-										</div>
-										<ul id="postList" className="list-group list-group-flush">
-											<li className="list-group-item">
-												<p>{post.content}</p>
-											</li>
-											<li key={key} className="list-group-item py-2">
-												<small className="float-left mt-1 text-muted">
-													TIPS: {window.web3.utils.fromWei(post.tipAmount.toString(), 'Ether')} ETH
-												</small>
-												<button className="btn btn-link btn-sm float-right pt-0">
-													<span>
-														TIP 0.1 ETH
-													</span>
-												</button>
-											</li>
-										</ul>
-									</div>
-								)
-							})}
-						</main>
-					</div>
-				</div>
+				{ this.state.loading 
+					? <div id="loader" className="text-center mt-5"><p>Loading...</p></div>
+					: <Main 
+						posts={this.state.posts}
+						createPost={this.createPost}
+						/>
+				}
 			</div>
 		);
 	}
